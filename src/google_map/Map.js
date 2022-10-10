@@ -9,7 +9,7 @@ const containerStyle = {
 };
 
 const Map = ({title, description, geoLocation, markerOnClick}) => {
-  
+  const {REACT_APP_API_KEY} = process.env;
   const [showTooltip, setShowTooltip] = useState(false);
   const handleShowTooltip = () => {
     if(!description.length){
@@ -19,7 +19,7 @@ const Map = ({title, description, geoLocation, markerOnClick}) => {
   }
   const { isLoaded } = useJsApiLoader({
     id: 'google-map-script',
-    googleMapsApiKey: 'AIzaSyDq5KNqIHE4KyOSdZ5GFZoVB9GZCymHGfs',
+    googleMapsApiKey: REACT_APP_API_KEY,
     libraries: ['geometry', 'drawing'],
   });
   return (
