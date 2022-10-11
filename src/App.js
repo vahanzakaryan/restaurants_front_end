@@ -13,17 +13,16 @@ import CreateRestaurant from "./pages/CreateRestaurant";
 
 function App() {
   const inputRef = useRef(null);
-  const restaurantRef = useRef(null);
 
   const [general, setGeneral] = useState([]);
 
-  const getImages = (title) => {
+  const getImages = (id) => {
     !localStorage.getItem("restaurant_images") && localStorage.setItem("restaurant_images", '{}');
     let images = JSON.parse(localStorage.getItem("restaurant_images"));
-    if(images["restaurant_title: " + title]){
-      return images["restaurant_title: " + title]
+    if(images["restaurantID:" + id]){
+      return images["restaurantID:" + id]
     }else{
-      images["restaurant_title: " + title] = [];
+      images["restaurantID:" + id] = [];
       localStorage.setItem("restaurant_images", JSON.stringify(images));
     }
     return [];
@@ -49,7 +48,7 @@ function App() {
             id: +el.id,
             title: el.title || "",
             description: el.description || "",
-            images: (getImages(el.title)) || [],
+            images: (getImages(el.id)) || [],
             geolocation: JSON.parse(el.geolocation) || {},
             ratings: JSON.parse(el.ratings),
         }
@@ -72,11 +71,11 @@ function App() {
                 <Router>
                   <Switch>
                     <Route exact path={ROUTES.GENERAL}>
-                        <General getData = {getData} inputRef = {inputRef} ref = {restaurantRef}/>
+                        <General getData = {getData} inputRef = {inputRef}/>
                     </Route>
                     <Route path={ROUTES.CURRENT_RESTAURANT}>
                       <Header ref = {inputRef}/>
-                        <Restaurant restaurantRef = {restaurantRef}/>
+                        <Restaurant getImages={getImages}/>
                     </Route>
                     <Route path={ROUTES.ADD_RESTAURANT}>
                       <Header ref = {inputRef}/>

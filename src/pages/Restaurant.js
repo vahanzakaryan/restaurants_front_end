@@ -1,4 +1,4 @@
-import React, {useReducer, useEffect, useState} from 'react';
+import React, {useReducer, useEffect} from 'react';
 import '../App.css';
 import ImagesList from '../components/ImagesList';
 import { RatingMaker } from '../components/RatingMaker';
@@ -7,9 +7,9 @@ import StarIcon from '@mui/icons-material/Star';
 import axios from 'axios';
 import * as ROUTES from "../routes/Routes";
 import { useHistory } from 'react-router-dom';
-import PageNotFound from '../not_found/PageNotFound';
 
 const initialState = {
+    restaurant: {},
     firstname: "",
     lastname: "",
     email: "",
@@ -20,6 +20,8 @@ const initialState = {
 
 const reducer = (state, action) => {
     switch(action.type){
+        case "SET_RESTAURANT":
+            return {...state, restaurant: action.payload}
         case "SET_FIRSTNAME":
             return {...state, firstname: action.payload}
         case "SET_LASTNAME":
@@ -39,11 +41,32 @@ const reducer = (state, action) => {
     }
 }
 
-function Restaurant({restaurantRef}) {
+function Restaurant({getImages}) {
     const [state, dispatch] = useReducer(reducer, initialState);
     const ratings = ["Worst", "Poor", "Below Average", "Average", "Good", "Excellent"];
     const history = useHistory();
 
+    useEffect(() => {
+        const {pathname} = history.location, id = pathname.substring(pathname.lastIndexOf('d') + 1, pathname.length);
+        axios.post('http://localhost:3001/getData/restaurant', {
+            id
+        }).then((response) => setRestaurant(response)).catch((error) => console.log(error));
+        
+    }, []);
+
+    const setRestaurant = (response) => {
+        const restaurant = {...response.data[0]};
+        restaurant.images = getImages(restaurant.id);
+    
+        dispatch({type: "SET_RESTAURANT", payload: {
+            id: restaurant.id,
+            title: restaurant.title,
+            description: restaurant.description,
+            images: restaurant.images,
+            geolocation: JSON.parse(restaurant.geolocation),
+            ratings: JSON.parse(restaurant.ratings)
+        }});
+    }
     const checkValidation = () => {
         let setError = [];
         if(state.firstname.length < 2){
@@ -69,7 +92,6 @@ function Restaurant({restaurantRef}) {
         history.replace(ROUTES.GENERAL);
     }
 
-
     const submitHandler = (e) => {
         if(checkValidation().length){
             dispatch({type:"SET_ERROR", payload: checkValidation()})
@@ -85,44 +107,44 @@ function Restaurant({restaurantRef}) {
             rating: state.rating,
             review: state.review
         };
-        if(!restaurantRef.current.ratings){
-            restaurantRef.current.ratings = [addRating]
+        if(!state.restaurant.ratings){
+            state.restaurant.ratings = [addRating]
         }else{
-            restaurantRef.current.ratings.unshift(addRating);
+            state.restaurant.ratings.unshift(addRating);
         }
         axios.post('http://localhost:3001/updateRating', {
-            id: restaurantRef.current.id,
-            ratings: JSON.stringify(restaurantRef.current.ratings)
+            id: state.restaurant.id,
+            ratings: JSON.stringify(state.restaurant.ratings)
         }).then(() => afterSubmit()).catch(() => console.log('error'));
     }
 
     const ratingCount = (rating) => {
         let count = 0;
-        restaurantRef.current.ratings && restaurantRef.current.ratings.map((el) => {
+        state.restaurant.ratings && state.restaurant.ratings.map((el) => {
             el.rating == rating && count++
         })
         return count;
     }
     
     return (
-        !restaurantRef.current ? <PageNotFound/>  :  <div className = "restaurant-main-container">
-        <div className = "restaurant-title-container">{restaurantRef.current && restaurantRef.current.title}</div>
+        state.restaurant && <div className = "restaurant-main-container">
+        <div className = "restaurant-title-container">{state.restaurant.title}</div>
         <div className = "restaurant-elements">
             <center>
-                <h3>{!restaurantRef.current.ratings ? "No Ratings" : "Average Rating"}</h3>
+                <h3>{!state.restaurant.ratings ? "No Ratings" : "Average Rating"}</h3>
                 {
-                    restaurantRef.current.ratings &&   <RatingMaker 
+                    state.restaurant.ratings &&   <RatingMaker 
                                                             readOnly 
-                                                            value = {Math.round(restaurantRef.current.ratings.reduce((acc, val) => acc + val.rating, 0)/restaurantRef.current.ratings.length)} 
+                                                            value = {Math.round(state.restaurant.ratings.reduce((acc, val) => acc + val.rating, 0)/state.restaurant.ratings.length)} 
                                                             larg
                                                         />      
                 }
                 <br/>
                 <br/>   
-                {restaurantRef.current.images.length ? <ImagesList images = {restaurantRef.current.images}/> : <h1>No Images To Show</h1>}
+                {state.restaurant.images && state.restaurant.images.length ? <ImagesList images = {state.restaurant.images}/> : <h1>No Images To Show</h1>}
             </center>
             <div className = "restaurant-description-holder">
-                {restaurantRef.current.description}
+                {state.restaurant.description}
             </div>
             <div className = "restaurant-reviews-container">
                 <div className = "restaurant-ratings">
@@ -131,7 +153,7 @@ function Restaurant({restaurantRef}) {
                         [5, 4, 3, 2, 1].map(el => ( <React.Fragment key = {el}>
                                                         <RatingMaker readOnly value = {el} small/>
                                                         <span style = {{margin:"0 0.5% 0 2%"}}>{ratings[el]}</span>
-                                                        {` ${restaurantRef.current.ratings ? `(${ratingCount(el)})` : '(0)'}`}
+                                                        {` ${state.restaurant.ratings ? `(${ratingCount(el)})` : '(0)'}`}
                                                         <br/>
                                                         <br/>
                                                     </React.Fragment>))
@@ -139,10 +161,10 @@ function Restaurant({restaurantRef}) {
                 </div>
                 <div className = "restaurant-reviews">
                     <center>
-                        <h1>{restaurantRef.current.ratings ? "Reviews" : "No Reviews"}</h1>
+                        <h1>{state.restaurant.ratings ? "Reviews" : "No Reviews"}</h1>
                     </center>
                     {
-                        restaurantRef.current.ratings && restaurantRef.current.ratings.map((el, index) => (
+                        state.restaurant.ratings && state.restaurant.ratings.map((el, index) => (
                             <div key = {index} className = "single-review-container">
                                 <h3>{el.firstname + " " + el.lastname + ' (' + el.email + ')'}</h3>
                                 <p>{el.review}</p>

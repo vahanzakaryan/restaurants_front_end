@@ -8,7 +8,7 @@ import Header from '../components/Header';
 import * as ROUTES from "../routes/Routes";
 import { useHistory } from 'react-router-dom';
 
-const General = forwardRef(({inputRef, getData}, ref) => {
+const General = ({inputRef, getData}) => {
     const general = useContext(Data);
     const history = useHistory();
 
@@ -38,7 +38,6 @@ const General = forwardRef(({inputRef, getData}, ref) => {
     }
 
     const storeRestaurantInfo = (card) => {
-        ref.current = card;
         history.push(ROUTES.CURRENT_RESTAURANT + card.id);
     }
 
@@ -95,6 +94,6 @@ const General = forwardRef(({inputRef, getData}, ref) => {
         </React.Fragment>
        
   );
-})
+}
 
 export default General

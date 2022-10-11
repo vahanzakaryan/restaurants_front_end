@@ -82,10 +82,23 @@ function CreateRestaurant() {
         return setError;
     }
 
-    const afterSubmit = () => {
+    const afterSubmit = (response) => {
         dispatch({type:'SET_INITIAL'});
         history.replace(ROUTES.GENERAL);
+        setImages(response.data.insertId);
+    }
 
+    const setImages = (id) => {
+        !localStorage.getItem('restaurant_images') && localStorage.setItem("restaurant_images", '{}');
+        let obj = JSON.parse(localStorage.getItem('restaurant_images')), images = [];
+
+        if(state.images.length){
+            images = [...state.images]
+        }else{
+            images = [];
+        }
+        obj[`restaurantID:${id}`] = images;
+        localStorage.setItem('restaurant_images', JSON.stringify(obj));
     }
 
     const submitHandler = (e) => {
@@ -95,22 +108,14 @@ function CreateRestaurant() {
         }
         e.preventDefault();
         dispatch({type:"SET_ERROR", payload: []})
-        !localStorage.getItem('restaurant_images') && localStorage.setItem("restaurant_images", '{}');
-        let obj = JSON.parse(localStorage.getItem('restaurant_images')), images = [];
+        
 
-        if(state.images.length){
-            images = [...state.images]
-        }else{
-            images = [];
-        }
-        obj[`restaurant_title: ${state.title}`] = images;
-        localStorage.setItem('restaurant_images', JSON.stringify(obj));
         axios.post('http://localhost:3001/postData', {
             title: state.title,
             description: state.description,
             ratings: null,
             geolocation: JSON.stringify(state.geolocation),
-        }).then(() => afterSubmit()).catch((err) => console.log(err));
+        }).then((response) => afterSubmit(response)).catch((err) => console.log(err));
     }
 
   return (
@@ -167,7 +172,7 @@ function CreateRestaurant() {
                         value = {state.description}
                     />
                     <br/>
-                    <div class="file-input">
+                    <div className = "file-input">
                     <input 
                         type="file" 
                         id="file_holder" 
